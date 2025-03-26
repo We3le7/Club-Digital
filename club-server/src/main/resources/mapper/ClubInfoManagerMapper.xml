@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.ClubInfoManagerMapper">
+    <!--更新基本的社团的属性-->
+    <update id="updateBaseClubInfo">
+        update club_info
+        <set>
+            <if test="clubName!=null"> club_name=#{clubName},</if>
+            <if test="clubIntro!=null"> club_intro=#{clubIntro},</if>
+            <if test="numOfMember!=null"> num_of_member=#{numOfMember},</if>
+            <if test="clubType!=null">
+                type_id=#{clubTypeId},
+            </if>
+            <if test="district!=null">
+                district=#{districtId}
+            </if>
+        </set>
+        where club_id=#{clubId}
+    </update>
+
+    <!--在membership中添加社团的会长信息-->
+    <insert id="addClubLeader">
+        insert into membership(student_id,club_id,is_belong,role)
+        values((select student_id from student_info where student_name=#{clubLeader}), #{clubId}, 1, 1)
+    </insert>
+
+    <!--在club_photo_urls中添加照片url-->
+    <insert id="addClubPhotos" parameterType="java.util.Map">
+        INSERT INTO club_photo_urls (club_id, club_photo_url) VALUES
+        <foreach collection="photoUrls" item="photo_url" index="index" separator=",">
+            (#{clubId}, #{photo_url})
+        </foreach>
+    </insert>
+
+</mapper>

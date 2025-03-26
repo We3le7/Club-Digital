@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.ClubInfoUserMapper">
+
+    <!--用户视图：分页查询社团信息-->
+    <select id="pageQuery" resultType="com.club.vo.ClubInfoUserVO">
+        select c.club_id,c.club_name,c.club_intro,c.num_of_member,
+        <!--查询社团类型-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.type_id, '"'))
+        FROM config_info
+        WHERE config_info.id = 3),'\"', '') as clubType,
+        <!--查询校区类型-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.district, '"'))
+        FROM config_info
+        WHERE config_info.id = 2),'\"', '') as district,
+        <!--查询社团会长-->
+        (
+        SELECT s.student_name
+        FROM membership m
+        LEFT JOIN student_info s ON m.student_id = s.student_id
+        WHERE m.club_id = c.club_id AND m.role = 1
+        LIMIT 1
+        ) AS clubLeader
+        from club_info c
+        <where>
+            <if test="clubName!=null">
+                and c.club_name like concat('%',#{clubName},'%')
+            </if>
+            <if test="clubType!=null">
+                and REPLACE(
+                (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.type_id, '"'))
+                FROM config_info
+                WHERE config_info.id = 3),'\"', '') like concat('%',#{clubType},'%')
+            </if>
+            <if test="district!=null and district!='所有校区'">
+                and REPLACE(
+                (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.district, '"'))
+                FROM config_info
+                WHERE config_info.id = 2),'\"', '') like concat('%',#{district},'%')
+            </if>
+        </where>
+    </select>
+
+    <!--根据id查询该社团的所有照片URL-->
+    <select id="getUrlByClubId" resultType="java.lang.String">
+        SELECT club_photo_url
+        FROM club_photo_urls
+        WHERE club_id = #{clubId}
+    </select>
+
+    <!--根据ID查询该社团的其它所有信息-->
+    <select id="clubInfoGetById" resultType="com.club.vo.ClubInfoUserVO">
+        select c.club_name,c.club_intro,c.num_of_member,
+        <!--查询社团类型-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.type_id, '"'))
+        FROM config_info
+        WHERE config_info.id = 3),'\"', '') as clubType,
+        <!--查询校区类型-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.district, '"'))
+        FROM config_info
+        WHERE config_info.id = 2),'\"', '') as district,
+        <!--查询社团会长-->
+        (
+        SELECT s.student_name
+        FROM membership m
+        LEFT JOIN student_info s ON m.student_id = s.student_id
+        WHERE m.club_id = c.club_id AND m.role = 1
+        LIMIT 1
+        ) AS clubLeader
+        from club_info c
+        where club_id=#{clubId}
+    </select>
+
+</mapper>

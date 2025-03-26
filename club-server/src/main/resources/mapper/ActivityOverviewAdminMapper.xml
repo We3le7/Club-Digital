@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.ActivityOverviewAdminMapper">
+    <!--根据用户提供的信息查询活动概览-->
+    <select id="getActivityOverviewByConditions" resultType="com.club.vo.ActivityOverviewAdminVO">
+        select a.activity_id,a.title,a.content,a.state,a.application_datetime,
+        <!--查询社团名称-->
+        (select club_info.club_name from club_info where club_info.club_id=a.club_id) as clubName,
+        <!--查询校区类型的名称-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', a.district, '"'))
+        FROM config_info
+        WHERE config_info.id = 2),'\"', '') as district,
+        <!--查询每一个活动的第一张照片的url-->
+        (select activity_picture.activity_picture_url from activity_picture where activity_picture.activity_id=a.activity_id
+        limit 1)as activityPictureUrl
+        from activity a
+        <where>
+            <if test="departmentId!=null">
+                a.department_id=#{departmentId}
+            </if>
+            <if test="title!=null">
+                and a.title like concat('%',#{title},'%')
+            </if>
+            <if test="clubId!=null">
+                and a.club_id=#{clubId}
+            </if>
+            <if test="state!=null">
+                and a.state=#{state}
+            </if>
+            <if test="district != null and district!=0">
+                AND a.district = #{district}
+            </if>
+            <if test="district!=null and district==0">
+                AND a.district in (1,2,3,4,5)
+            </if>
+        </where>
+        <!--按照申请时间application_datetime进行排序-->
+        <choose>
+            <when test="byApplicationDatetime == 1"> <!-- 如果参数为1，则按照byApplicationDatetime降序排序 -->
+                order by a.application_datetime DESC
+            </when>
+            <when test="byApplicationDatetime == 2"> <!-- 如果参数为2，则按照byApplicationDatetime升序排序 -->
+                order by a.application_datetime ASC
+            </when>
+            <otherwise> <!-- 其他情况，不排序 -->
+                <!-- 不添加order by子句 -->
+            </otherwise>
+        </choose>
+    </select>
+
+    <!--机关部处查询出活动的基本信息-->
+    <select id="getActivityDetailsByActivityId" resultType="com.club.vo.ActivityDetailsAdminVO">
+        select a.activity_id,a.title,a.specific_addr,a.views,a.favorites,a.state,a.comment,
+               a.start_datetime,a.end_datetime,a.require_registration,a.registration_start,a.registration_end,
+               a.application_datetime,a.review_datetime,a.visibility,a.responsible_person,a.phone_num,a.content,
+        <!--查询出社团名称-->
+        (select club_info.club_name from club_info where club_info.club_id=a.club_id)
+        as clubName,
+        <!--查询出校区名称-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', a.district, '"'))
+        FROM config_info
+        WHERE config_info.id = 2),'\"', '') as district,
+        <!--查询出活动类型-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', a.activity_type_id, '"'))
+        FROM config_info
+        WHERE config_info.id = 5),'\"', '') as activityType
+
+        from activity a
+        where a.activity_id=#{activityId}
+    </select>
+
+    <!--机关部处端根据活动id获取活动图片-->
+    <select id="getPhotoUrlsByActivityId" resultType="java.lang.String">
+        SELECT activity_picture_url
+        from activity_picture,activity
+        where activity.activity_id=#{activityId}
+          and activity.activity_id=activity_picture.activity_id
+    </select>
+
+    <!--机关部处端根据活动id获取活动附件url-->
+    <select id="getFileUrlsByActivityId" resultType="java.lang.String">
+        SELECT activity_file_url
+        from activity_file,activity
+        where activity.activity_id=#{activityId}
+          and activity.activity_id=activity_file.activity_id
+    </select>
+
+</mapper>

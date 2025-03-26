@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.PromoteMapper">
+    <!-- 假设有一个表叫做examination_files，有columns：file_path, club_id -->
+    <insert id="uploadPromoteFile">
+        <!-- 这里使用foreach来插入多个文件路径 -->
+        <foreach collection="fileUrls" item="fileUrl" separator=";">
+            INSERT INTO recommend_files (recommend_file, club_id) VALUES (#{fileUrl.url}, #{clubId})
+        </foreach>
+    </insert>
+    <select id="getAllPromote" resultType="com.club.vo.AllRecommendResultVO">
+        <!-- 使用<if>标签来判断clubName是否为空 -->
+        <if test="clubName != null and clubName != ''">
+            SELECT recommend.club_id,club_info.club_name, recommend.is_excellent FROM recommend,club_info WHERE club_name = #{clubName} and recommend.club_id = club_info.club_id
+        </if>
+        <if test="clubName == null or clubName == ''">
+            SELECT recommend.club_id,club_info.club_name, recommend.is_excellent FROM recommend,club_info WHERE recommend.club_id = club_info.club_id
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.ActivityLeagueMapper">
+    <!--校团委端获取所有的活动模板-->
+    <select id="getAllTemplate" resultType="com.club.vo.TemplateInfoVO">
+        select t.template_id,template_name,template_url,
+        <!--查询出模板Id对应的模板类型-->
+        REPLACE(
+        (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', t.template_type, '"'))
+        FROM config_info
+        WHERE config_info.id = 6),'\"', '') as templateType
+        from template t
+    </select>
+
+
+
+</mapper>

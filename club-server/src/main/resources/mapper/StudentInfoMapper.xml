@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.StudentInfoMapper">
+  <update id="updateById" parameterType="com.club.entity.StudentInfo">
+      update student_info
+      <set>
+          <if test ="studentName!=null and studentName !=''">
+              student_name=#{studentName},
+          </if>
+          <if test ="studentNum!=null and studentNum !=''">
+              student_num=#{studentNum},
+          </if>
+          <if test ="passwordHash!=null and passwordHash !=''">
+              password_hash=#{passwordHash},
+          </if>
+          <if test ="phoneNum!=null and phoneNum !=''">
+              phone_num=#{phoneNum},
+          </if>
+          <if test ="sex!=null and sex !=''">
+              sex=#{sex},
+          </if>
+          <if test ="college!=null and college!=''">
+              college=#{college},
+          </if>
+          <if test ="grade!=null and grade!=''">
+              grade=#{grade},
+          </if>
+          <if test ="email!=null and email!=''">
+              email=#{email},
+          </if>
+          <if test ="level!=null and level!=''">
+              level=#{level},
+          </if>
+          <if test ="studentPhotoUrl!=null and studentPhotoUrl!=''">
+              student_photo_url=#{studentPhotoUrl},
+          </if>
+
+      </set>
+      where student_id = #{studentId}
+  </update>
+    <select id="getManagerPageQuery" resultType="com.club.vo.ManagerInfoVO">
+        SELECT
+        s.*,
+        c.club_id,
+        c.club_name,
+        m.role,
+        (
+        SELECT REPLACE(JSON_EXTRACT(ci.kind, CONCAT('$."', m.role, '"')), '"', '')
+        FROM config_info ci
+        WHERE ci.id = 1
+        ) AS occupation
+        FROM
+        student_info s
+        INNER JOIN
+        membership m ON s.student_id = m.student_id
+        LEFT OUTER JOIN
+        club_info c ON m.club_id = c.club_id
+        <where>
+            <if test="studentName!=null and studentName !=''">
+                AND s.student_name LIKE CONCAT('%', #{studentName}, '%')
+            </if>
+            <if test="clubName!=null and clubName !=''">
+                AND c.club_name LIKE CONCAT('%', #{clubName}, '%')
+            </if>
+        </where>
+        ORDER BY
+        s.student_id
+    </select>
+    <update id="updateManagerRole">
+        UPDATE membership
+        SET role = #{role}
+        WHERE student_id = #{studentId} AND club_id = #{clubId}
+    </update>
+    <select id="getLoginById" resultType="com.club.vo.UserLoginVO">
+        SELECT
+            si.student_id as studentId,
+            si.student_name as studentName,
+            m.club_id as clubId,
+            m.role as role
+        FROM
+            student_info si
+                LEFT JOIN
+            membership m ON si.student_id = m.student_id
+        WHERE
+            si.student_id = #{studentId}
+    </select>
+</mapper>

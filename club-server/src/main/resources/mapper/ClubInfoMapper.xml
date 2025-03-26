@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.ClubInfoMapper">
+    <select id="pageQuery" resultType="com.club.vo.ClubInfoVO">
+        SELECT
+        c.club_name,
+        c.club_id,
+        r.recruit_id AS recruitId,
+        r.start_time AS startTime,
+        r.end_time AS endTime,
+        r.poster_url AS posterUrl,
+        (
+        SELECT REPLACE(JSON_EXTRACT(ci.kind, CONCAT('$."', c.type_id, '"')), '"', '')
+        FROM config_info ci
+        WHERE ci.id = 3
+        ) AS clubType,
+        (
+        SELECT REPLACE(JSON_EXTRACT(ci.kind, CONCAT('$."', c.district, '"')), '"', '')
+        FROM config_info ci
+        WHERE ci.id=2
+        ) AS district
+        FROM club_info c
+        LEFT OUTER JOIN recruitment r ON c.club_id = r.club_id
+        <where>
+            NOW() BETWEEN r.start_time AND r.end_time
+            <if test="clubName!=null and clubName !=''">
+                AND club_name LIKE CONCAT('%', #{clubName}, '%')
+            </if>
+            <if test="clubType!=null and clubType!=''">
+                and REPLACE(
+                (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.type_id, '"'))
+                FROM config_info
+                WHERE config_info.id = 3),'\"', '') like concat('%',#{clubType},'%')
+            </if>
+            <if test="district!=null and district!='' and district!='所有校区'">
+                and REPLACE(
+                (SELECT JSON_EXTRACT(config_info.kind, CONCAT('$."', c.district, '"'))
+                FROM config_info
+                WHERE config_info.id = 2),'\"', '') like concat('%',#{district},'%')
+            </if>
+        order by club_id
+        </where>
+    </select>
+    <select id="pageMyClubQuery" resultType="com.club.vo.MyClubPageVO">
+        SELECT
+            m.club_id AS clubId,
+            m.student_id,
+            ci.club_name,
+            ci.club_intro AS introduction,
+            -- 假设你想要第一张照片的URL，可以使用子查询或GROUP_CONCAT（取决于数据库）
+            -- 这里使用LEFT JOIN和COALESCE来获取第一张非空的photo_url
+            COALESCE(
+                    (
+                        SELECT club_photo_url
+                        FROM club_photo_urls cpu
+                        WHERE cpu.club_id = ci.club_id
+                    LIMIT 1
+                ),
+            'No photo available'
+        ) AS firstPhotoUrl
+        FROM
+            membership m
+                JOIN
+            club_info ci ON m.club_id = ci.club_id
+        WHERE
+            m.student_id = #{studentId}
+    </select>
+</mapper>

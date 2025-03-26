@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.ApplicationQuitMapper">
+    <select id="myApplication" resultType="com.club.vo.MyApplicationVO">
+        SELECT
+        a.*,
+        c.club_name AS clubName,
+        REPLACE(
+        (SELECT JSON_EXTRACT(ci.kind, CONCAT('$."', c.district, '"'))
+        FROM config_info ci
+        WHERE ci.id = 2),
+        '\"',
+        ''
+        ) AS district
+        FROM
+        application_quit a
+        LEFT OUTER JOIN
+        club_info c ON a.club_id = c.club_id
+        <where>
+            a.applicant_id = #{applicantId}
+        </where>
+    </select>
+</mapper>

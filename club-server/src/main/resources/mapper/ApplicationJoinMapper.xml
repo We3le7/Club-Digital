@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.club.mapper.ApplicationJoinMapper">
+    <update id="update" parameterType="com.club.entity.ApplicationJoin">
+        update application_join
+        <set>
+            <if test ="examineTime!=null">
+                examine_time=#{examineTime},
+            </if>
+            <if test ="examinerId!=null">
+                examiner_id=#{examinerId},
+            </if>
+            <if test ="examinerName!=null">
+                examiner_name=#{examinerName},
+            </if>
+            <if test ="state!=null">
+                state=#{state},
+            </if>
+
+        </set>
+        where apply_id = #{applyId}
+    </update>
+    <select id="getPageApplication" resultType="com.club.vo.ApplyPageVO">
+        select s.*, a.apply_time as applyTime, a.apply_id, a.club_id, a.state
+        from student_info s
+        join application_join a on s.student_id = a.applicant_id
+        where club_id = #{clubId}
+        <if test="studentName != null and studentName != ''">
+            AND s.student_name LIKE CONCAT('%', #{studentName}, '%')
+        </if>
+        <if test="studentNum!=null and studentNum!=''">
+            and student_num =#{studentNum}
+        </if>
+
+        <if test="state==1">
+         and state =1
+        </if>
+        <if test="state==0">
+            and state =0
+        </if>
+        <if test="state==-1">
+            and state is null
+        </if>
+
+    </select>
+    <select id="myApplication" resultType="com.club.vo.MyApplicationVO">
+        SELECT
+        a.*,
+        c.club_name AS clubName,
+        REPLACE(
+        (SELECT JSON_EXTRACT(ci.kind, CONCAT('$."', c.district, '"'))
+        FROM config_info ci
+        WHERE ci.id = 2),
+        '\"',
+        ''
+        ) AS district
+        FROM
+        application_join a
+        LEFT OUTER JOIN
+        club_info c ON a.club_id = c.club_id
+        <where>
+            a.applicant_id = #{applicantId}
+        </where>
+    </select>
+    <select id="getByClubId" resultType="com.club.vo.InterviewVO">
+        select s.*, a.apply_time as applyTime, a.apply_id, a.club_id, a.state
+        from student_info s
+                 join application_join a on s.student_id = a.applicant_id
+        where club_id = #{clubId}
+          and a.state is null
+        and state is null;
+    </select>
+
+</mapper>

@@ -1,0 +1,9 @@
+club:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: 47.97.230.22
+    port: 3308
+    database: club_management
+    username: club
+    password: 123456
+  alioss:
